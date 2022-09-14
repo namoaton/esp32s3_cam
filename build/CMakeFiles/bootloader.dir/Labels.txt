@@ -1,0 +1,13 @@
+# Target labels
+ bootloader
+# Source files and their labels
+/home/namoaton/work/Richard/test_cam/take_photo_for_nn/build/CMakeFiles/bootloader
+/home/namoaton/work/Richard/test_cam/take_photo_for_nn/build/CMakeFiles/bootloader.rule
+/home/namoaton/work/Richard/test_cam/take_photo_for_nn/build/CMakeFiles/bootloader-complete.rule
+/home/namoaton/work/Richard/test_cam/take_photo_for_nn/build/bootloader-prefix/src/bootloader-stamp/bootloader-install.rule
+/home/namoaton/work/Richard/test_cam/take_photo_for_nn/build/bootloader-prefix/src/bootloader-stamp/bootloader-mkdir.rule
+/home/namoaton/work/Richard/test_cam/take_photo_for_nn/build/bootloader-prefix/src/bootloader-stamp/bootloader-download.rule
+/home/namoaton/work/Richard/test_cam/take_photo_for_nn/build/bootloader-prefix/src/bootloader-stamp/bootloader-update.rule
+/home/namoaton/work/Richard/test_cam/take_photo_for_nn/build/bootloader-prefix/src/bootloader-stamp/bootloader-patch.rule
+/home/namoaton/work/Richard/test_cam/take_photo_for_nn/build/bootloader-prefix/src/bootloader-stamp/bootloader-configure.rule
+/home/namoaton/work/Richard/test_cam/take_photo_for_nn/build/bootloader-prefix/src/bootloader-stamp/bootloader-build.rule

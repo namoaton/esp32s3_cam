@@ -118,7 +118,7 @@ gpio_num_t CAM_POWER_PIN = GPIO_NUM_32;
 dl_matrix3du_t *image_matrix = NULL;
 
 TaskHandle_t tf_task_handle = NULL;
- QueueHandle_t xQueueFrame_2 = xQueueCreate(2, sizeof(camera_fb_t *));
+QueueHandle_t xQueueFrame_2 = xQueueCreate(2, 9216*2);
 static esp_err_t init_camera();
 
 void led_pin_init()
@@ -257,7 +257,7 @@ static esp_err_t init_camera()
   camera_config.pin_reset = -1; // RESET_GPIO_NUM;
   camera_config.xclk_freq_hz = 10000000;
   camera_config.pixel_format = PIXFORMAT_GRAYSCALE;
-  camera_config.frame_size = FRAMESIZE_CIF;
+  camera_config.frame_size = FRAMESIZE_96X96;
   camera_config.jpeg_quality = 10;
   camera_config.fb_count = 2;
   camera_config.fb_location = CAMERA_FB_IN_PSRAM;
@@ -402,14 +402,44 @@ void get_and_and_save_image()
 {
   esp_err_t ret = ESP_OK;
   camera_fb_t *fb = NULL;
+  uint16_t *frame = NULL;
   size_t _jpg_buf_len = 0;
   uint8_t *_jpg_buf = NULL;
   fb = esp_camera_fb_get();
+  frame = (uint16_t *)malloc(9216 * 2);
+  memset(frame, 0, 9216 * 2);
   if (!fb)
   {
 
     ESP_LOGE(TAG_0, "Camera capture failed");
   }
+  for (int16_t i =0; i<9216;i++)
+  {
+    uint16_t red=0;
+    uint16_t green=0;
+    uint16_t blue=0;
+
+    uint8_t red_mask=0xF8;
+    uint8_t green_mask=0xFC;
+    uint8_t blue_mask= 0xF8;
+
+    uint8_t red_shift = 8;
+    uint8_t green_shift = 2;
+    uint8_t blue_shift_left = 3;
+
+    red   = fb->buf[i]&red_mask;
+    green = fb->buf[i]&green_mask;
+    blue  = fb->buf[i]&blue_mask;
+
+    red = red<<red_shift;
+    green = green<<green_shift;
+    blue = blue>>blue_shift_left;
+
+    // frame[i] = red+green+blue;
+    frame[i] = red+2047;
+  }
+  xQueueSend(xQueueFrame_2, frame, portMAX_DELAY);
+  vTaskDelay(100 / portTICK_RATE_MS);
   if (fb->format != PIXFORMAT_JPEG)
   {
     bool jpeg_converted = frame2jpg(fb, 80, &_jpg_buf, &_jpg_buf_len);
@@ -424,12 +454,12 @@ void get_and_and_save_image()
     _jpg_buf_len = fb->len;
     _jpg_buf = fb->buf;
   }
-  
-  xQueueSend(xQueueFrame_2,&fb, portMAX_DELAY);
-  write_photo_to_sd(_jpg_buf, _jpg_buf_len);
 
+  write_photo_to_sd(_jpg_buf, _jpg_buf_len);
+  
   esp_camera_fb_return(fb);
 }
+
 extern "C" void app_main()
 {
   // Initialize NVS
@@ -472,7 +502,6 @@ extern "C" void app_main()
 
   AppButton *key = new AppButton();
   esp_camera_fb_return(fb);
- 
 
   AppLCD *lcd = new AppLCD(key, xQueueFrame_2);
   key->attach(lcd);

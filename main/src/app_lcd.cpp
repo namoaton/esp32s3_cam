@@ -10,6 +10,8 @@
 #include "driver/spi_master.h"
 #include "driver/gpio.h"
 
+#include "dl_lib_matrix3d.h"
+
 #include "include/logo_en_240x240_lcd.h"
 
 static const char TAG[] = "App/LCD";
@@ -147,25 +149,28 @@ void AppLCD::update()
 
 static void task(AppLCD *self)
 {
-    ESP_LOGD(TAG, "Start");
-
-    camera_fb_t *frame = nullptr;
+    ESP_LOGI(TAG, "Start");
+    uint16_t*frame = NULL;
+    frame = (uint16_t*)malloc(9216*2);
+    // memset(frame,0,9216*2);
+    //  ESP_LOGI(TAG, "FRAME %d %d %d", frame[0],frame[1],frame[2]);
     while (true)
     {
         if (self->queue_i == nullptr)
             break;
 
-        if (xQueueReceive(self->queue_i, &frame, portMAX_DELAY))
+        if (xQueueReceive(self->queue_i, frame, portMAX_DELAY))
         {
-            if (self->switch_on)
-                self->driver.draw_bitmap(0, 0, frame->width, frame->height, (uint16_t *)frame->buf);
-            else if (self->paper_drawn == false)
-                self->draw_wallpaper();
+            ESP_LOGI(TAG, "FRAME %d %d %d", frame[0],frame[100],frame[200]);
+            // if (self->switch_on)
+                self->driver.draw_bitmap(0, 0, 96,96, frame);
+            // else if (self->paper_drawn == false)
+            //     self->draw_wallpaper();
 
             if (self->queue_o)
                 xQueueSend(self->queue_o, &frame, portMAX_DELAY);
-            else
-                self->callback(frame);
+            // else
+                // self->callback(frame);
         }
     }
     ESP_LOGD(TAG, "Stop");

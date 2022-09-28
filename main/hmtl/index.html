@@ -1,20 +1,37 @@
 <!DOCTYPE html>
 <html>
-<body>
-
-<center>
-<h2>DogCam</h2>
-
-<form action="/post">
-  <label for="fname">New network name:</label><br>
-  <input type="text" id="nname" name="nname" value=""><br>
-  <label for="lname">Network password:</label><br>
-  <input type="password" id="npass" name="npass" value=""><br><br>
-  <input type="submit" value="Submit">
-</form> 
-
-<p>If you need please enter new network name and password.</p>
-
-</center>
-</body>
+  <head>
+    <style type="text/css">
+      html {  font-family: Arial;  display: inline-block;  margin: 0px auto;  text-align: center;}h1{  color: #070812;  padding: 2vh;}.button {  display: inline-block;  background-color: #b30000; //red color  border: none;  border-radius: 4px;  color: white;  padding: 16px 40px;  text-decoration: none;  font-size: 30px;  margin: 2px;  cursor: pointer;}.button2 {  background-color: #364cf4; //blue color}.content {   padding: 50px;}.card-grid {  max-width: 800px;  margin: 0 auto;  display: grid;  grid-gap: 2rem;  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));}.card {  background-color: white;  box-shadow: 2px 2px 12px 1px rgba(140,140,140,.5);}.card-title {  font-size: 1.2rem;  font-weight: bold;  color: #034078}
+    </style>
+    <title>ESP32 WEB SERVER</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="data:," />
+    <link
+      rel="stylesheet"
+      href="https://use.fontawesome.com/releases/v5.7.2/css/all.css"
+      integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr"
+      crossorigin="anonymous"
+    />
+    <link rel="stylesheet" type="text/css" />
+  </head>
+  <body>
+    <h2>DOG CAM</h2>
+    <div class="content">
+      <div class="card-grid">
+        <div class="card">
+          <img id="shot_img" src="/shot" />
+          <p>
+            <a href="/save"><button class="button">SAVE</button></a>
+            <a href="/delete"><button class="button button2">DELETE</button></a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </body>
+  <script>
+    var timestamp = new Date().getTime();
+    var el = document.getElementById("shot_img");
+    el.src = "/shot?" + timestamp;
+  </script>
 </html>

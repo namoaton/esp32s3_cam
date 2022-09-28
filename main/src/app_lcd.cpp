@@ -17,12 +17,12 @@
 static const char TAG[] = "App/LCD";
 
 AppLCD::AppLCD(AppButton *key,
-            //    AppSpeech *speech,
+               //    AppSpeech *speech,
                QueueHandle_t queue_i,
                QueueHandle_t queue_o,
                void (*callback)(camera_fb_t *)) : Frame(queue_i, queue_o, callback),
                                                   key(key),
-                                                //   speech(speech),
+                                                  //   speech(speech),
                                                   switch_on(false)
 {
     do
@@ -89,7 +89,7 @@ void AppLCD::draw_wallpaper()
         ESP_LOGE(TAG, "Memory for bitmap is not enough");
         return;
     }
-    memcpy(pixels, logo_en_240x240_lcd, (logo_en_240x240_lcd_width * logo_en_240x240_lcd_height) * sizeof(uint16_t));
+    memcpy(pixels, namodan, (logo_en_240x240_lcd_width * logo_en_240x240_lcd_height) * sizeof(uint16_t));
     this->driver.draw_bitmap(0, 0, logo_en_240x240_lcd_width, logo_en_240x240_lcd_height, (uint16_t *)pixels);
     heap_caps_free(pixels);
 
@@ -132,14 +132,14 @@ void AppLCD::update()
         }
     }
 
-   /* if (this->speech->command > COMMAND_NOT_DETECTED)
-    {
-        if (this->speech->command >= MENU_STOP_WORKING && this->speech->command <= MENU_MOTION_DETECTION)
-        {
-            this->switch_on = (this->speech->command == MENU_STOP_WORKING) ? false : true;
-            ESP_LOGD(TAG, "%s", this->switch_on ? "ON" : "OFF");
-        }
-    }*/
+    /* if (this->speech->command > COMMAND_NOT_DETECTED)
+     {
+         if (this->speech->command >= MENU_STOP_WORKING && this->speech->command <= MENU_MOTION_DETECTION)
+         {
+             this->switch_on = (this->speech->command == MENU_STOP_WORKING) ? false : true;
+             ESP_LOGD(TAG, "%s", this->switch_on ? "ON" : "OFF");
+         }
+     }*/
 
     if (this->switch_on == false)
     {
@@ -150,8 +150,8 @@ void AppLCD::update()
 static void task(AppLCD *self)
 {
     ESP_LOGI(TAG, "Start");
-    uint16_t*frame = NULL;
-    frame = (uint16_t*)malloc(9216*2);
+    uint16_t *frame = NULL;
+    frame = (uint16_t *)malloc(9216 * 2);
     // memset(frame,0,9216*2);
     //  ESP_LOGI(TAG, "FRAME %d %d %d", frame[0],frame[1],frame[2]);
     while (true)
@@ -161,16 +161,29 @@ static void task(AppLCD *self)
 
         if (xQueueReceive(self->queue_i, frame, portMAX_DELAY))
         {
-            ESP_LOGI(TAG, "FRAME %d %d %d", frame[0],frame[100],frame[200]);
-            // if (self->switch_on)
-                self->driver.draw_bitmap(0, 0, 96,96, frame);
+            ESP_LOGI(TAG, "FRAME %d %d %d", frame[0], frame[100], frame[200]);
+            self->draw_color(0x52aa);
+           
+            if (self->switch_on)
+            {
+                self->driver.draw_bitmap(0, 0, 96, 96, (uint16_t *)frame);
+                // int counter_pixels = 0;
+                // for(int x = 0; x<96; x++)
+                // {
+                //     for(int y = 0; y<96; y++)
+                //     {
+                //         self->driver.draw_pixel(x,y,frame[counter_pixels]);
+                //         counter_pixels++;
+                //     }
+                // }
+            }
             // else if (self->paper_drawn == false)
             //     self->draw_wallpaper();
 
             if (self->queue_o)
                 xQueueSend(self->queue_o, &frame, portMAX_DELAY);
             // else
-                // self->callback(frame);
+            // self->callback(frame);
         }
     }
     ESP_LOGD(TAG, "Stop");

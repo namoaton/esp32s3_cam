@@ -152,6 +152,7 @@ static void task(AppLCD *self)
     ESP_LOGI(TAG, "Start");
     uint16_t *frame = NULL;
     frame = (uint16_t *)malloc(9216 * 2);
+\
     // memset(frame,0,9216*2);
     //  ESP_LOGI(TAG, "FRAME %d %d %d", frame[0],frame[1],frame[2]);
     while (true)

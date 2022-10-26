@@ -76,6 +76,7 @@ static void lcd_st7789_init_reg(void)
 {
     LCD_WRITE_CMD(0x3A);
     LCD_WRITE_DATA(0x05);
+    // LCD_WRITE_DATA(0x03);
 
     LCD_WRITE_CMD(0xB2);
     LCD_WRITE_DATA(0x0C);

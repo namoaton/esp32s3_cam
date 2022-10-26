@@ -38,6 +38,9 @@
 #include "include/app_button.hpp"
 #include "include/app_lcd.hpp"
 
+#include "device_info.h"
+#include "i2c_utils_component.h"
+#include "PCT2075.h"
 #include <dirent.h>
 #define MOUNT_POINT "/sdcard"
 /* Max length a file path can have on storage */
@@ -53,7 +56,8 @@ static EventGroupHandle_t s_wifi_event_group;
 #define SCRATCH_BUFSIZE 8192
 
 // #define BOARD_ESP32CAM_AITHINKER 1
-#define CONFIG_CAMERA_MODULE_ESP_S3_EYE 1
+// #define CONFIG_CAMERA_MODULE_ESP_S3_EYE 1
+#define CONFIG_CAMERA_MODULE_ESP_S3_DOG_CAM 1
 // WROVER-KIT PIN Map
 #ifdef BOARD_WROVER_KIT
 
@@ -123,6 +127,31 @@ static EventGroupHandle_t s_wifi_event_group;
 #define Y9_GPIO_NUM 16
 
 #endif
+
+#ifdef CONFIG_CAMERA_MODULE_ESP_S3_DOG_CAM
+#define CAMERA_MODULE_NAME "ESP-S3-DOG_CAM"
+#define PWDN_GPIO_NUM -1
+#define RESET_GPIO_NUM 1
+
+#define VSYNC_GPIO_NUM 6
+#define HREF_GPIO_NUM 7
+#define PCLK_GPIO_NUM 13
+#define XCLK_GPIO_NUM 15
+
+#define SIOD_GPIO_NUM 4
+#define SIOC_GPIO_NUM 5
+
+#define Y2_GPIO_NUM 11
+#define Y3_GPIO_NUM 9
+#define Y4_GPIO_NUM 8
+#define Y5_GPIO_NUM 10
+#define Y6_GPIO_NUM 12
+#define Y7_GPIO_NUM 18
+#define Y8_GPIO_NUM 17
+#define Y9_GPIO_NUM 16
+
+#endif
+
 static const char *TAG_FIND_VALUE = "FIND VALUE";
 static const char *TAG_SDCARD = "SD CARD";
 static const char *TAG_HTML = "HTML AP";
@@ -293,6 +322,33 @@ static esp_err_t init_camera()
   camera_config.fb_location = CAMERA_FB_IN_PSRAM;
   camera_config.grab_mode = CAMERA_GRAB_WHEN_EMPTY;
 #endif
+#ifdef CONFIG_CAMERA_MODULE_ESP_S3_DOG_CAM
+  camera_config.ledc_channel = LEDC_CHANNEL_0;
+  camera_config.ledc_timer = LEDC_TIMER_0;
+  camera_config.pin_d0 = Y2_GPIO_NUM;
+  camera_config.pin_d1 = Y3_GPIO_NUM;
+  camera_config.pin_d2 = Y4_GPIO_NUM;
+  camera_config.pin_d3 = Y5_GPIO_NUM;
+  camera_config.pin_d4 = Y6_GPIO_NUM;
+  camera_config.pin_d5 = Y7_GPIO_NUM;
+  camera_config.pin_d6 = Y8_GPIO_NUM;
+  camera_config.pin_d7 = Y9_GPIO_NUM;
+  camera_config.pin_xclk = XCLK_GPIO_NUM;
+  camera_config.pin_pclk = PCLK_GPIO_NUM;
+  camera_config.pin_vsync = VSYNC_GPIO_NUM;
+  camera_config.pin_href = HREF_GPIO_NUM;
+  camera_config.pin_sscb_sda = SIOD_GPIO_NUM;
+  camera_config.pin_sscb_scl = SIOC_GPIO_NUM;
+  camera_config.pin_pwdn = PWDN_GPIO_NUM;
+  camera_config.pin_reset =  RESET_GPIO_NUM;
+  camera_config.xclk_freq_hz = 10000000;
+  camera_config.pixel_format = PIXFORMAT_GRAYSCALE;
+  camera_config.frame_size = FRAMESIZE_96X96;
+  camera_config.jpeg_quality = 10;
+  camera_config.fb_count = 2;
+  camera_config.fb_location = CAMERA_FB_IN_PSRAM;
+  camera_config.grab_mode = CAMERA_GRAB_WHEN_EMPTY;
+#endif
   // initialize the camera
   esp_err_t err = esp_camera_init(&camera_config);
   if (err != ESP_OK)
@@ -314,6 +370,7 @@ static void rgb_print(dl_matrix3du_t *image_matrix, uint32_t color, const char *
   fb.format = FB_BGR888;
   fb_gfx_print(&fb, (fb.width - (strlen(str) * 14)) / 2, 10, color, str);
 }
+
 
 /*static esp_err_t stream_handler(httpd_req_t *req)
 {
@@ -861,32 +918,43 @@ extern "C" void app_main()
   ESP_ERROR_CHECK(ret);
   // init_interrupt();
   // sdcard init and get wifi credentials
+  Device_info *dev;
+  // ESP_LOGI("TEST","device size if %d",sizeof(struct device_info_s));
+  dev = (Device_info*)malloc(sizeof(struct device_info_s));
+  memset(dev,0,sizeof(struct device_info_s));
+
   char ssid[40];
   char ssid_pass[40];
-  memset(ssid, 0, sizeof(ssid));
-  memset(ssid_pass, 0, sizeof(ssid_pass));
+
+  i2c_master_init();
+  i2c_scan();
+
+  pct2075_read_temp(&(dev->temp));
   // xTaskCreatePinnedToCore(&monitoring_task, "monitoring_task", 2048, NULL, 1, NULL, 1);
   sd_card_init();
-  int8_t read_conf_result = read_config_file(ssid, ssid_pass);
-  wifi_init_sta(ssid, ssid_pass);
+  int8_t read_conf_result = read_config_file(dev->ssid, dev->ssid_pass);
+
+  print_device_info(dev);
+
+  wifi_init_sta(dev->ssid, dev->ssid_pass);
   vTaskDelay(2000 / portTICK_RATE_MS);
   // sd_card_unmount();
 
-  if (ESP_OK != init_camera())
-  {
-    return;
-  }
+  // if (ESP_OK != init_camera())
+  // {
+  //   return;
+  // }
   start_ap_server();
   // camera_fb_t *fb = NULL;
-  fb = esp_camera_fb_get();
+  // fb = esp_camera_fb_get();
   // image_matrix = dl_matrix3du_alloc(1, 96,96,3);//fb->width, fb->height, 3);
-  image_matrix = dl_matrix3du_alloc(1, fb->width, fb->height, 3);
-  if (!fb)
-  {
+  // image_matrix = dl_matrix3du_alloc(1, fb->width, fb->height, 3);
+  // if (!fb)
+  // {
 
-    ESP_LOGE(TAG_0, "Camera capture failed");
-    return;
-  }
+  //   ESP_LOGE(TAG_0, "Camera capture failed");
+  //   return;
+  // }
 
   AppButton *key = new AppButton();
   esp_camera_fb_return(fb);
